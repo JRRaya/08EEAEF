@@ -108,3 +108,4 @@ g_faginea <- pcf(
 g_faginea_iso <- plot(g_faginea$iso)
 
 # 6. Evaluación de la significancia mediante simulaciones de Monte Carlo
+>>>>>>>>> Temporary merge branch 2
