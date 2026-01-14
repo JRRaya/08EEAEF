@@ -10,6 +10,7 @@ pacman::p_load(sf, terra, tidyverse, data.table, readxl, spatstat)
 # 2. Carga de datos
 lista_dfs <- setNames(
   lapply(
+<<<<<<< HEAD
     excel_sheets("tarea2/data/tarea2.xlsx")[2:3], # Filtramos para leer solo hojas 2 y 3
     function(x) {
       df <- readxl::read_excel("tarea2/data/tarea2.xlsx", sheet = x, col_names = FALSE)
@@ -107,3 +108,13 @@ g_faginea <- pcf(
 g_faginea_iso <- plot(g_faginea$iso)
 
 # 6. Evaluación de la significancia mediante simulaciones de Monte Carlo
+=======
+    excel_sheets("data/tarea2.xlsx")[2:3], # Filtramos para leer solo hojas 2 y 3
+    function(x) {
+      df <- readxl::read_excel("data/tarea2.xlsx", sheet = x, col_names = FALSE)
+      setNames(df, c("x", "y", "z"))
+    }
+  ), 
+  excel_sheets("data/tarea2.xlsx")[2:3] # Filtramos también los nombres para el setNames
+)
+>>>>>>> 82a5ab6a2e86016f05cfc13a2d17a2bf72f1933b
