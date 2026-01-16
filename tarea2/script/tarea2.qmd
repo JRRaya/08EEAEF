@@ -1,3 +1,24 @@
+---
+title: "Análisis espacial de puntos"
+format:
+  html:
+    code-fold: true
+    toc: true
+    number-sections: true
+    embed-resources: true
+    self-contained-math: true
+knitr:
+  opts_knit:
+    root.dir: ".."
+---
+
+# Carga de datos y paquetes
+
+
+```{r}
+#| label: setup
+#| echo: false
+
 # 1. Carga de paquetes y limpieza de entorno
 # 1.1. Limpiamos la RAM
 rm(list = ls(all.names = TRUE))
@@ -10,14 +31,20 @@ pacman::p_load(sf, terra, tidyverse, data.table, readxl, spatstat, onpoint, patc
 # 2. Carga de datos
 lista_dfs <- setNames(
   lapply(
-    excel_sheets("tarea2/data/tarea2.xlsx")[2:3], # Filtramos para leer solo hojas 2 y 3
+    excel_sheets("data/tarea2.xlsx")[2:3], # Filtramos para leer solo hojas 2 y 3
     function(x) {
-      df <- readxl::read_excel("tarea2/data/tarea2.xlsx", sheet = x, col_names = FALSE)
+      df <- readxl::read_excel("data/tarea2.xlsx", sheet = x, col_names = FALSE)
       setNames(df, c("x", "y"))
     }
   ), 
-  excel_sheets("tarea2/data/tarea2.xlsx")[2:3] # Filtramos también los nombres para el setNames
+  excel_sheets("data/tarea2.xlsx")[2:3] # Filtramos también los nombres para el setNames
 )
+```
+
+# Análisis univariante
+
+```{r}
+#| label: analisis-univariante
 
 # 3. Análisis univariante
 # 3.1. Definir función de análisis univariante
@@ -77,6 +104,13 @@ for(i in names(resultados_univariante)) {
     print(p)
   }
 }
+```
+
+# Análisis bivariante
+
+
+```{r}
+#| label: analisis-bivariante
 
 # 4. Análisis bivariante
 # 4.1. Creamos la función de análisis bivariante
@@ -112,8 +146,9 @@ for(i in names(resultados_bivariante)) {
     base_size = 15,
     line_size = 1
   ) + 
-    labs(title = paste("Estadístico:", j))
+    labs(title = paste("Estadístico:", i))
   
   # Graficamos
   print(p)
 }
+```
