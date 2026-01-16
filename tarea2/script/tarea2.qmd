@@ -14,10 +14,10 @@ knitr:
 
 # Carga de datos y paquetes
 
-
 ```{r}
 #| label: setup
 #| echo: false
+#| output: false
 
 # 1. Carga de paquetes y limpieza de entorno
 # 1.1. Limpiamos la RAM

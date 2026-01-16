@@ -1,0 +1,209 @@
+---
+title: "Análisis espacial de superficies (Índice SADIE)"
+format:
+  html:
+    code-fold: true
+    toc: true
+    number-sections: true
+    embed-resources: true
+    self-contained-math: true
+---
+
+# Carga de datos y paquetes
+
+```{r}
+#| label: setup
+#| echo: false
+#| output: false
+
+# 1. Carga de paquetes y limpieza de entorno
+# 1.1. Limpiamos la RAM
+rm(list = ls(all.names = TRUE))
+pacman::p_unload(pacman::p_loaded(), character.only = TRUE)
+gc(full = TRUE)
+
+# 1.2. Cargamos las librerías a emplear
+pacman::p_load(dplyr, tidyr, readxl, writexl, epiphy, parallel, RcppParallel, data.table, DT, here)
+
+
+# 1.3. Establecemos el número de núcleos a emplear
+setDTthreads(4)
+getDTthreads()
+
+# 2. Carga de datos a emplear
+lista_dfs <- setNames(
+  lapply(
+    excel_sheets("tarea1/data/SADIE.xlsx"), # Nombres de las hojas del excel
+    function(x) {
+      df <- read_excel("tarea1/data/SADIE.xlsx", sheet = x, col_names = FALSE) # Carga de cada uno de los df
+      setNames(df, c("x", "y", "z")) # Asignamos nombres de las columnas
+    }
+  ), 
+  excel_sheets("tarea1/data/SADIE.xlsx")
+)
+```
+
+```{r}
+#| echo: false
+
+# 2.2. Comprobación visual
+lista_dfs$Base_1 %>% 
+    select(x, y) %>% 
+    plot()
+
+lista_dfs$Base_2 %>% 
+    select(x, y) %>% 
+    plot()
+```
+
+# Análisis SADIE
+
+```{r}
+#| label: sadie
+#| warning: false
+#| message: false
+#| error: false
+
+# 3. Calculo de SADIE
+# 3.1. 1º base de datos
+base1 <- lista_dfs[[1]] %>% 
+  sadie(
+    index = "all",
+    nperm = 999,
+    seed = 123,
+    threads = 3,
+    verbose = FALSE
+  )
+
+summary(base1)
+
+# 3.2. 2º base de datos
+base2 <- lista_dfs[[2]] %>% 
+  sadie(
+    index = "all",
+    nperm = 999,
+    seed = 123,
+    threads = 3,
+    verbose = FALSE
+  )
+
+summary(base2)
+```
+
+Como puede apreciarse, la **1º base de datos** presenta un $I_a =$ `r base1$Ia`, por lo que presenta un patrón regular ($I_a < 1$), aunque este resultado no es significativo ($p \ valor$ =`r base1$Pa`). Por otro lado, la **2º base de datos** presenta un $I_a =$ `r base2$Ia`, por lo que presenta un patrón ligeramente agregado ($I_a > 1$), aunque de nuevo este resultado no es significativo ($p \ valor$ =`r base2$Pa`)
+
+# Tablas de datos
+
+```{r}
+#| label: tablas
+#| warning: false
+#| message: false
+#| error: false
+
+# 4. Contrucción de las tablas de datos
+# 4.1. 1º base de datos
+df1 <- lista_dfs[[1]] %>% 
+  mutate(
+    v = base1$info_clust$idx_P,
+    c = base1$info_clust$idx_LMX,
+    p_value = base2$info_clust$prob
+  )
+
+# 4.2. 2º base de datos
+df2 <- lista_dfs[[2]] %>% 
+  mutate(
+    v = base2$info_clust$idx_P,
+    c = base2$info_clust$idx_LMX,
+    p_value = base2$info_clust$prob
+  )
+```
+
+```{r}
+#| label: tbl-df1
+#| tbl-cap: "Resultados de la 1º base de datos"
+
+datatable(
+  df1,
+  options = list(
+    pageLength = 10,      # Filas por página
+    scrollY = "400px",    # Altura del scroll vertical
+    scrollX = TRUE,       # Scroll horizontal si es necesario
+    dom = 'Bfrtip',       # Elementos a mostrar
+    buttons = c('copy', 'csv', 'excel')  # Botones de exportación
+  ),
+  filter = 'top',         # Filtros en la parte superior
+  rownames = FALSE
+)
+```
+
+```{r}
+#| label: tbl-df2
+#| tbl-cap: "Resultados de la 2º base de datos"
+
+datatable(
+  df2,
+  options = list(
+    pageLength = 10,      # Filas por página
+    scrollY = "400px",    # Altura del scroll vertical
+    scrollX = TRUE,       # Scroll horizontal si es necesario
+    dom = 'Bfrtip',       # Elementos a mostrar
+    buttons = c('copy', 'csv', 'excel')  # Botones de exportación
+  ),
+  filter = 'top',         # Filtros en la parte superior
+  rownames = FALSE
+)
+```
+
+# Visualización
+
+```{r}
+#| label: visualizacion
+#| warning: false
+#| message: false
+#| error: false
+
+# 5. Representación gráfica y guardado de los índices 'v' y 'c'
+# 5.1. Mapas del índice de agrupación 'v'
+# 5.1.1. 1º base de datos
+plot(base1, index = "Perry", main = "Índice de Perry de la 1º base de datos")
+plot(base1, isoclines = TRUE, index = "Perry", main = "Mapa de isoclinas del índice de Perry de la 1º base de datos")
+
+# 5.1.2. 2º base de datos
+plot(base2, index = "Perry", main = "Índice de Perry de la 2º base de datos")
+plot(base2, isoclines = TRUE, index = "Perry", main = "Mapa de isoclinas del índice de Perry de la 2º base de datos")
+
+# 5.2. Mapas del índice de agrupación 'c'
+# 5.2.1. 1º base de datos
+plot(base1, index = "Li-Madden-Xu", main = "Índice de Li-Madden-Xu de la 1º base de datos")
+plot(base1, isoclines = TRUE, index = "Li-Madden-Xu", main = "Mapa de isoclinas del índice de Li-Madden-Xu de la 1º base de datos")
+
+# 5.2.2. 2º base de datos
+plot(base2, index = "Li-Madden-Xu", main = "Índice de Li-Madden-Xu de la 2º base de datos")
+plot(base2, isoclines = TRUE, index = "Li-Madden-Xu", main = "Mapa de isoclinas del índice de Li-Madden-Xu de la 1º base de datos")
+```
+
+# Guardado de los datos
+
+```{r}
+#| label: guardado
+#| warning: false
+#| message: false
+#| error: false
+
+# 6. Guardado de los resultados
+# 6.1. 1º base de datos
+write_xlsx(
+  x = df1,
+  path = "outputs/df1.xlsx",
+  col_names = TRUE,
+  format_headers = TRUE
+)
+
+# 6.2. 2º base de datos
+write_xlsx(
+  x = df2,
+  path = "outputs/df2.xlsx",
+  col_names = TRUE,
+  format_headers = TRUE
+)
+```

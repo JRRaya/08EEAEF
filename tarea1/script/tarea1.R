@@ -15,13 +15,13 @@ getDTthreads()
 # 2. Carga de datos a emplear
 lista_dfs <- setNames(
   lapply(
-    excel_sheets("./data/SADIE.xlsx"), # Nombres de las hojas del excel
+    excel_sheets("tarea1/data/SADIE.xlsx"), # Nombres de las hojas del excel
     function(x) {
-      df <- read_excel("./data/SADIE.xlsx", sheet = x, col_names = FALSE) # Carga de cada uno de los df
+      df <- read_excel("tarea1/data/SADIE.xlsx", sheet = x, col_names = FALSE) # Carga de cada uno de los df
       setNames(df, c("x", "y", "z")) # Asignamos nombres de las columnas
     }
   ), 
-  excel_sheets("./data/SADIE.xlsx")
+  excel_sheets("tarea1/data/SADIE.xlsx")
 )
 
 # 3. Calculo de SADIE
@@ -54,14 +54,16 @@ summary(base2)
 df1 <- lista_dfs[[1]] %>% 
   mutate(
     v = base1$info_clust$idx_P,
-    c = base1$info_clust$idx_LMX
+    c = base1$info_clust$idx_LMX,
+    p_value = base2$info_clust$prob
   )
 
 # 4.2. 2º base de datos
 df2 <- lista_dfs[[2]] %>% 
   mutate(
     v = base2$info_clust$idx_P,
-    c = base2$info_clust$idx_LMX
+    c = base2$info_clust$idx_LMX,
+    p_value = base2$info_clust$prob
   )
 
 # 5. Representación gráfica y guardado de los índices 'v' y 'c'
@@ -105,7 +107,6 @@ dev.off()
 
 # 6. Guardado de los resultados
 # 6.1. 1º base de datos
-# 6.1.1. Guardado de la tabla de datos creada
 write_xlsx(
   x = df1,
   path = "outputs/df1.xlsx",
@@ -113,15 +114,10 @@ write_xlsx(
   format_headers = TRUE
 )
 
-# 6.1.2. Guardado de los mapas
-
 # 6.2. 2º base de datos
-# 6.2.1. Guardado de la tabla de datos creada
 write_xlsx(
   x = df2,
   path = "outputs/df2.xlsx",
   col_names = TRUE,
   format_headers = TRUE
 )
-
-# 6.2.2. Guardado de los mapas
