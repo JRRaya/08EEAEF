@@ -69,39 +69,39 @@ df2 <- lista_dfs[[2]] %>%
 # 5. Representación gráfica y guardado de los índices 'v' y 'c'
 # 5.1. Mapas del índice de agrupación 'v'
 # 5.1.1. 1º base de datos
-png("outputs/perry_base1.png", width = 2100, height = 2100, res = 300)
+png("tarea1/outputs/perry_base1.png", width = 2100, height = 2100, res = 300)
 base1_plot <- plot(base1, index = "Perry")
 dev.off()
 
-png("outputs/perry_isoclines_base1.png", width = 2100, height = 2100, res = 300)
+png("tarea1/outputs/perry_isoclines_base1.png", width = 2100, height = 2100, res = 300)
 base1_plot_isoclines <- plot(base1, isoclines = TRUE, index = "Perry")
 dev.off()
 
 # 5.1.2. 2º base de datos
-png("outputs/perry_base2.png", width = 2100, height = 2100, res = 300)
+png("tarea1/outputs/perry_base2.png", width = 2100, height = 2100, res = 300)
 base2_plot <- plot(base2, index = "Perry")
 dev.off()
 
-png("outputs/perry_isoclines_base2.png", width = 2100, height = 2100, res = 300)
+png("tarea1/outputs/perry_isoclines_base2.png", width = 2100, height = 2100, res = 300)
 base2_plot_isoclines <- plot(base2, isoclines = TRUE, index = "Perry")
 dev.off()
 
 # 5.2. Mapas del índice de agrupación 'c'
 # 5.2.1. 1º base de datos
-png("outputs/lmx_base1.png", width = 2100, height = 2100, res = 300)
+png("tarea1/outputs/lmx_base1.png", width = 2100, height = 2100, res = 300)
 base1_plot <- plot(base1, index = "Li-Madden-Xu")
 dev.off()
 
-png("outputs/lmx_isoclines_base1.png", width = 2100, height = 2100, res = 300)
+png("tarea1/outputs/lmx_isoclines_base1.png", width = 2100, height = 2100, res = 300)
 base1_plot_isoclines <- plot(base1, isoclines = TRUE, index = "Li-Madden-Xu")
 dev.off()
 
 # 5.2.2. 2º base de datos
-png("outputs/lmx_base2.png", width = 2100, height = 2100, res = 300)
+png("tarea1/outputs/lmx_base2.png", width = 2100, height = 2100, res = 300)
 base2_plot <- plot(base2, index = "Li-Madden-Xu")
 dev.off()
 
-png("outputs/lmx_isoclines_base2.png", width = 2100, height = 2100, res = 300)
+png("tarea1/outputs/lmx_isoclines_base2.png", width = 2100, height = 2100, res = 300)
 base2_plot_isoclines <- plot(base2, isoclines = TRUE, index = "Li-Madden-Xu")
 dev.off()
 
@@ -109,7 +109,7 @@ dev.off()
 # 6.1. 1º base de datos
 write_xlsx(
   x = df1,
-  path = "outputs/df1.xlsx",
+  path = "tarea1/outputs/df1.xlsx",
   col_names = TRUE,
   format_headers = TRUE
 )
@@ -117,7 +117,7 @@ write_xlsx(
 # 6.2. 2º base de datos
 write_xlsx(
   x = df2,
-  path = "outputs/df2.xlsx",
+  path = "tarea1/outputs/df2.xlsx",
   col_names = TRUE,
   format_headers = TRUE
 )

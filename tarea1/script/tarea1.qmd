@@ -7,6 +7,9 @@ format:
     number-sections: true
     embed-resources: true
     self-contained-math: true
+knitr:
+  opts_knit:
+    root.dir: ".."
 ---
 
 # Carga de datos y paquetes
@@ -33,13 +36,13 @@ getDTthreads()
 # 2. Carga de datos a emplear
 lista_dfs <- setNames(
   lapply(
-    excel_sheets("tarea1/data/SADIE.xlsx"), # Nombres de las hojas del excel
+    excel_sheets("data/SADIE.xlsx"), # Nombres de las hojas del excel
     function(x) {
-      df <- read_excel("tarea1/data/SADIE.xlsx", sheet = x, col_names = FALSE) # Carga de cada uno de los df
+      df <- read_excel("data/SADIE.xlsx", sheet = x, col_names = FALSE) # Carga de cada uno de los df
       setNames(df, c("x", "y", "z")) # Asignamos nombres de las columnas
     }
   ), 
-  excel_sheets("tarea1/data/SADIE.xlsx")
+  excel_sheets("data/SADIE.xlsx")
 )
 ```
 
@@ -69,7 +72,7 @@ lista_dfs$Base_2 %>%
 base1 <- lista_dfs[[1]] %>% 
   sadie(
     index = "all",
-    nperm = 999,
+    nperm = 100,
     seed = 123,
     threads = 3,
     verbose = FALSE
@@ -81,7 +84,7 @@ summary(base1)
 base2 <- lista_dfs[[2]] %>% 
   sadie(
     index = "all",
-    nperm = 999,
+    nperm = 100,
     seed = 123,
     threads = 3,
     verbose = FALSE
@@ -90,7 +93,9 @@ base2 <- lista_dfs[[2]] %>%
 summary(base2)
 ```
 
-Como puede apreciarse, la **1º base de datos** presenta un $I_a =$ `r base1$Ia`, por lo que presenta un patrón regular ($I_a < 1$), aunque este resultado no es significativo ($p \ valor$ =`r base1$Pa`). Por otro lado, la **2º base de datos** presenta un $I_a =$ `r base2$Ia`, por lo que presenta un patrón ligeramente agregado ($I_a > 1$), aunque de nuevo este resultado no es significativo ($p \ valor$ =`r base2$Pa`)
+Como puede apreciarse, la **1º base de datos** presenta un $I_a =$ `r base1$Ia`, por lo que presenta un patrón regular ($I_a < 1$), aunque este resultado no es significativo ($p \ valor$ =`r base1$Pa`). Por otro lado, la **2º base de datos** presenta un $I_a =$ `r base2$Ia`, por lo que presenta un patrón ligeramente agregado ($I_a > 1$), aunque de nuevo este resultado no es significativo ($p \ valor$ =`r base2$Pa`).
+
+En ambos casos, el `p-valor` es considerablemente mayor que `0.05`, por lo que, en ambos casos, no existe evidencia significativa de agregación/regularidad espacial.
 
 # Tablas de datos
 
@@ -157,7 +162,7 @@ datatable(
 # Visualización
 
 ```{r}
-#| label: visualizacion
+#| label: visualizacion-perry-base1
 #| warning: false
 #| message: false
 #| error: false
@@ -167,20 +172,51 @@ datatable(
 # 5.1.1. 1º base de datos
 plot(base1, index = "Perry", main = "Índice de Perry de la 1º base de datos")
 plot(base1, isoclines = TRUE, index = "Perry", main = "Mapa de isoclinas del índice de Perry de la 1º base de datos")
+```
+
+La comprobación visual del mapa de manchas y claros generado a partir de los índices de Perry calculados, permite ver como efectivamente se puede apreciar cierta regularidad en la distribución de de las manchas y los claros. De todos modos, esta regularidad no es tan marcada, por lo que, unido a su falta de significancia, se podría decir que nos encontramos ante una variable que se reparte de manera bastante homogénea a lo largo del área de estudio. De hecho, presenta algunas zonas de agregados, por lo que puede compensar en cierto modo la regularidad del patrón subyacente.
+
+```{r}
+#| label: visualizacion-perry-base2
+#| warning: false
+#| message: false
+#| error: false
 
 # 5.1.2. 2º base de datos
 plot(base2, index = "Perry", main = "Índice de Perry de la 2º base de datos")
 plot(base2, isoclines = TRUE, index = "Perry", main = "Mapa de isoclinas del índice de Perry de la 2º base de datos")
+```
+
+De nuevo, nos encontramos ante un patrón bastante aleatorio. Se mezclan manchas con claros, por lo que no se podría afirmar que hubiera una clara distribución agregada. Es complicado justificar una variable que se reparta de forma tan curiosa a lo largo del área de estudio.
+
+```{r}
+#| label: visualizacion-li-madden-xu-base1
+#| warning: false
+#| message: false
+#| error: false
 
 # 5.2. Mapas del índice de agrupación 'c'
 # 5.2.1. 1º base de datos
 plot(base1, index = "Li-Madden-Xu", main = "Índice de Li-Madden-Xu de la 1º base de datos")
 plot(base1, isoclines = TRUE, index = "Li-Madden-Xu", main = "Mapa de isoclinas del índice de Li-Madden-Xu de la 1º base de datos")
+```
+
+Podemos comprobar visualmente como el índice de Li-Madden-Xu es claramente más conservativo. Tan solo se muestra una mancha (en la parte superior) y un claro (en la parte inferior). El mapa muestra como el resto de puntos no son significativos. La variable medida podría tratarse de la concentración de algún compuesto en el suelo. Este podría presentarse de manera homogénea en al extensión estudiada, salvo perturbaciones momentaneas que podrían venir a configurar la única mancha y claro significativos detectados por este índice.
+
+```{r}
+#| label: visualizacion-li-madden-xu-base2
+#| warning: false
+#| message: false
+#| error: false
 
 # 5.2.2. 2º base de datos
 plot(base2, index = "Li-Madden-Xu", main = "Índice de Li-Madden-Xu de la 2º base de datos")
 plot(base2, isoclines = TRUE, index = "Li-Madden-Xu", main = "Mapa de isoclinas del índice de Li-Madden-Xu de la 1º base de datos")
 ```
+
+De nuevo, volvemos a comprobar como este índice presenta unos valores más conservativos, además de presentar una interpretación más directa de la significancia de las manchas y los claros detectados.
+
+Esta 2º base de datos podría tratarse de una especie que se reproduce de forma tanto asexual como sexual. La variable que marca la intensidad en cada punto de muestreo podría ser el diámetro a la altura de pecho (DBH). Los claros cercanos a manchas podrían corresponder al valor de la variable medida en plántulas, mientras que las manchas corresponderían a individuos maduros, y las manchas pequeñas más cercanas a las manchas más grandes sería individuos reproducidos asexualmente.
 
 # Guardado de los datos
 
