@@ -2,6 +2,7 @@
 title: "Análisis espacial de puntos"
 format:
   html:
+    html-math-method: katex
     code-fold: true
     toc: true
     number-sections: true
@@ -10,9 +11,12 @@ format:
 knitr:
   opts_knit:
     root.dir: ".."
+bibliography: references.bib
 ---
 
 # Carga de datos y paquetes
+
+Los datos con los que trabajaremos consisten en dos bases de datos. Cada base de datos contiene las coordenadas medidas en el eje de abscisas y el de ordenadas para una serie de puntos. Las observaciones de *Q. ilex* son corresponden a *rebrotes* (reproducción asexual), mientras las observaciones de *Q. faginea* corresponden a *plántula* (reproducción sexual).
 
 ```{r}
 #| label: setup
@@ -45,6 +49,9 @@ lista_dfs <- setNames(
 
 ```{r}
 #| label: analisis-univariante
+#| message: false
+#| warning: false
+#| error: false
 
 # 3. Análisis univariante
 # 3.1. Definir función de análisis univariante
@@ -61,30 +68,37 @@ analisis_univariante <- function(lista, n = 999) {
     # Carga de los datos de la especie
     df <- lista[[i]]
 
-    # Contrucción del objeto 'ppp'
+    # Construcción del objeto 'ppp'
     x <- ppp(df$x, df$y, window = owin(range(df$x), range(df$y)))
 
     # Guardado directo de los resultados en la lista
     resultados[[i]] <- list(
-      K = envelope(x, Kest, nsim = n, correction = "all", verbose = FALSE),
+      K = envelope(x, Kest, nsim = n, correction = "all", verbose = FALSE), 
       L = envelope(x, Lest, nsim = n, correction = "all", verbose = FALSE),
-      L_c = envelope(x, center_Lest, nsim = n, correction = "all", verbose = FALSE),
+      Lc = envelope(x, center_Lest, nsim = n, correction = "all", verbose = FALSE),
       G = envelope(x, pcf, nsim = n, correction = "all", verbose = FALSE),
       O = envelope(x, Oest, nsim = n, correction = "all", verbose = FALSE)
     )
   }
 
-  # Devuleve la lista de resultados
+  # Devuelve la lista de resultados
   return(resultados)
 }
 
 # 3.2. Cálculo de resultados
 resultados_univariante <- analisis_univariante(lista = lista_dfs)
 
-# 3.3. Emplear 'onpoint::plot_quantums()' para la visualización
+# 3.3. Visualización
+# 3.3.1. Creamos la lista donde guardar los gráficos creados
+graficos_univariante <- list()
+
+# 3.3.2. Empleo de 'onpoint::plot_quantums()' para la visualización
 for(i in names(resultados_univariante)) {
   # Lista de estadísticos para la especie
   estadisticos <- resultados_univariante[[i]]
+
+  # Inicializar sublista para la especie
+  graficos_univariante[[i]] <- list()
 
   # Iteramos sobre cada estadístico
   for(j in names(estadisticos)) {
@@ -93,21 +107,193 @@ for(i in names(resultados_univariante)) {
 
     # Contruimos el gráfico
     p <- plot_quantums(
-      estadistico, 
-      labels = c("obs > hi)", "lo < obs < hi", "obs < lo"),
-      base_size = 20,
-      line_size = 1
+      input = estadistico, 
+      labels = c("observed < low", "low < observed < high", "observed > high"),
+      line_size = 0.8,
+      base_size = 15,
+      xlab = "r (metros)",
+      ylab = j
     ) + 
       labs(title = paste("Especie:", i , "| Estadístico:", j))
     
-    # Graficamos
-    print(p)
+    # Guardamos en la lista
+    graficos_univariante[[i]][[j]] <- p
   }
 }
 ```
 
-# Análisis bivariante
+Tanto en el análisis univariante como en el bivariante vamos a emplear distintos estadísticos. Algunos dan los mismos resultados, pero tras otros subyacen lógicas y planteamientos diferentes, por lo que los resultados serán distintos. De este modo podremos comparar los resultados obtenidos y, (quizás) de este modo, logremos obtener conclusiones más robustas.
 
+En este caso, todos los estadísticos y pruebas empleadas para el análisis espacial corresponderán a los tipos de métodos basados en las distancias físicas entre los puntos (o *nearest-neighbour methods*). A pesar de las diferencias en el modo de plantear el análisis espacial, todos se prueban contra la hipótesis nula ($H_0$) de que la distribución de los puntos es aleatoria. En concreto, se testa contra una *distribución uniforme de Poisson*.
+
+En concreto, en el análisis espacial univariante, emplearemos:
+
+## Función K de Ripley $(K(r))$ univariante
+
+Este estadístico parametriza el tipo, intensidad y rango de un patrón espacial concreto. Esta función es acumulativa, por lo que la información que revela a una determinada distancia corresponde al recuento de todos los puntos que se encuentran dentro del "disco" (que en la ecuación se denomina $A$, es decir, su área).
+
+Su formulación es:
+
+$$
+K \left( r \right) = n^{-2} A \sum_{i = 1}^n \sum_{j = 1}^n w_{ij}^{-1} I_{ij} \left( r \right)
+$$
+
+siendo $w_{ij}^{-1}$ el factor de pesado, $n$ el número de puntos, e $I_{ij} \left( r \right)$:
+
+$$
+I_{ij}(r) = \left[ \begin{array}{ll}
+1 & \text{si } d_{ij} \leq r \\
+0 & \text{si } d_{ij} > r
+\end{array} \right.
+$$
+
+donde $w_{ij}^{-1}$ es la distancia entre dos puntos.
+
+Esta prueba la podemos ejecutar mediante la función `spatstat::Kest()`, y para nuestros datos el resultado fue:
+
+```{r}
+#| label: k1_ilex
+#| echo: false
+#| message: false
+#| warning: false
+#| error: false
+
+print(graficos_univariante$q_ilex$K)
+```
+
+```{r}
+#| label: k1_faginea
+#| echo: false
+
+print(graficos_univariante$q_faginea$K)
+```
+
+## Transformación de la K de Ripley de Besag $(L(r))$ univariante
+
+Para una distribución completamente aleatoria (*distribución uniforme de Poisson*) en el patrón de puntos, el valor teórico de la función sería $L(r) = r$. La raíz cuadrada estabiliza la varianza del estimador, por lo que es más idóneo para el contraste de hipótesis.
+
+Su ecuación es:
+
+$$
+L(r) = \sqrt{\frac{K(r)}{\pi}}
+$$
+
+Esta prueba la podemos ejecutar mediante la función `spatstat::Lest()`, y para nuestros datos el resultado fue:
+
+```{r}
+#| label: l1_ilex
+#| echo: false
+#| message: false
+#| warning: false
+#| error: false
+
+print(graficos_univariante$q_ilex$L)
+```
+
+```{r}
+#| label: l1_faginea
+#| echo: false
+#| message: false
+#| warning: false
+#| error: false
+
+print(graficos_univariante$q_faginea$L)
+```
+
+## Transformación de la K de Ripley de Besag centrada $(L_c(r))$ univariante
+
+Esta versión de la función permite una interpretación visual más clara y directa al centrar su valor en torno a 0.
+
+Esta prueba la podemos ejecutar mediante la función `onpoint::center_Lest()`, y para nuestros datos el resultado fue:
+
+```{r}
+#| label: lc1_ilex
+#| echo: false
+#| message: false
+#| warning: false
+#| error: false
+
+print(graficos_univariante$q_ilex$Lc)
+```
+
+```{r}
+#| label: lc1_faginea
+#| echo: false
+#| message: false
+#| warning: false
+#| error: false
+
+print(graficos_univariante$q_faginea$Lc)
+```
+
+La interpretación del estadístico $Lc(r)$ es clara y directa para ambas especies. El patrón de distribución de *Q. ilex*  es agregado, tanto a pequeña como a gran esscala espacial. Sin embargo, el patrón de agregación es más marcado a relativamente poca distancia (de $1-2 \ m$). Esto concuerda con nuestro conocimiento previo, pues se tratan de individuos reproducidos asexualmente. Además, podríamos hipotetizar como las encinas adultas ejercen un efecto *facilitador* sobre los individuos jóvenes reproducidos asexualmente, por lo que estos tenderían a agregarse entorno a los adultos.
+
+En el caso de las plántulas de *Q. faginea*, estas presentan un patrón de agregación a mediana-gran escala espacial. Esto, muy posiblemente, se debe a la competencia intraespecífica que ejercen los robles adultos en los jóvenes. Estos últimos tienden a ocupar los huecos que dejan los individuos adultos de robles entre sí. Estos espacios son aprovechados por los robles más jóvenes, los que tienen mayor capacidad de dispersión (ya que se trata de reproducción asexual), por lo que pueden llegar a esas distancias (de $3-5 \ m$) y ocupar esos espacios. Como entre los individuos jóvenes no se ejercen excesiva competencia intraespecífica entre sí, tienden a acumularse los unos cerca de los otros (en aquellos huecos dejados por los adultos, donde seguramente no acaparen toda la radiación solar incidente).
+
+## Función de correlación por pares $(g(r))$ univariante
+
+Se formula como:
+
+$$
+g(r) = \frac{K'(r)}{2 \pi r}
+$$
+
+siendo $K'(r)$ la derivada de $K(r)$. Para un proceso aleatorio de Poisson (distribución aleatoria de los datos), $g(r) = 1$. Valores de $g(r) \lt 1$ sugieren inhibición entre los puntos, mientras que valores de $g(r) \gt 1$ sugieren agregación.
+
+Esta prueba la podemos ejecutar mediante la función `spatstat::pcf()`, y para nuestros datos el resultado fue:
+
+```{r}
+#| label: g1_ilex
+#| echo: false
+#| message: false
+#| warning: false
+#| error: false
+
+print(graficos_univariante$q_ilex$G)
+```
+
+```{r}
+#| label: g1_faginea
+#| echo: false
+#| message: false
+#| warning: false
+#| error: false
+
+print(graficos_univariante$q_faginea$G)
+```
+
+## Estadístico O-ring $(O(r))$ univariante
+
+Hablando de forma general, la función $(O(r))$ [@wiegand2004] escala la función $(g(r))$ gracias a la ayuda de la intensidad.
+
+Esta prueba la podemos ejecutar mediante la función `onpoint::Oest()`, y para nuestros datos el resultado fue:
+
+```{r}
+#| label: o1_ilex
+#| echo: false
+#| message: false
+#| warning: false
+#| error: false
+
+print(graficos_univariante$q_ilex$O)
+```
+
+```{r}
+#| label: o1_faginea
+#| echo: false
+#| message: false
+#| warning: false
+#| error: false
+
+print(graficos_univariante$q_faginea$O)
+```
+
+En este caso, los patrones que se describen con la función $g(r)$ y $O(r)$ son muy similares, siendo más conservativa esta última. *Q. ilex* muestra agregación a pequeña escala, entre los $0-2 \ m$. A partir de los $\approx 2.5 m$ se presenta dispersión, para, de nuevo, a los $3.5-4 \ m$ volver a presentar agregación. Esto no termina de concordar con el resultado obtenido mediante la K de Ripley (y los estaísticos derivados de esta).
+
+El caso de *Q. faginea* es similar al anterior, pues los datos podrían interpretarse casi contrarios. La función $O(r)$ presenta agregación a pequeña escala, mientras que la K de Ripley mostraba agregación a media-gran escala.
+d
+
+# Análisis bivariante
 
 ```{r}
 #| label: analisis-bivariante
@@ -134,21 +320,71 @@ analisis_bivariante <- function(i, j, n = 999) {
 # 4.2. Cálculo de resultados
 resultados_bivariante <- analisis_bivariante(i = lista_dfs$Q_ilex, j = lista_dfs$Q_faginea)
 
-# 4.3. Representación visual de los resultados
+# 4.3. Visualización
+# 4.3.1. Creamos la lista donde guardar los gráficos creados
+graficos_bivariante <- list()
+
+# 4.3.2. Empleo de 'onpoint::plot_quantums()' para la visualización
 for(i in names(resultados_bivariante)) {
-  # Estadistico a graficar
+  # Lista de estadísticos para la especie
   estadistico <- resultados_bivariante[[i]]
-  
+
   # Contruimos el gráfico
   p <- plot_quantums(
-    estadistico, 
-    labels = c("obs > hi)", "lo < obs < hi", "obs < lo"),
+    input = estadistico, 
+    labels = c("observed < low", "low < observed < high", "observed > high"),
+    line_size = 0.8,
     base_size = 15,
-    line_size = 1
+    xlab = "r (metros)",
+    ylab = i
   ) + 
     labs(title = paste("Estadístico:", i))
-  
-  # Graficamos
-  print(p)
+
+  # Guardamos en la lista
+  graficos_bivariante[[i]] <- p
 }
 ```
+
+El paquete `spatstat` calcula por defecto la combinación lineal de los estadísticos de ambos análisis bivariables
+
+## Función K de Ripley $(K(r))$ bivariante
+
+```{r}
+#| label: k12
+#| echo: false
+#| message: false
+#| warning: false
+#| error: false
+
+print(graficos_bivariante$K)
+```
+
+## Transformación de la K de Ripley de Besag $(L(r))$ bivariante
+
+```{r}
+#| label: l12
+#| echo: false
+#| message: false
+#| warning: false
+#| error: false
+
+print(graficos_bivariante$L)
+```
+
+## Función de correlación por pares $(g(r))$ bivariante
+
+```{r}
+#| label: g12
+#| echo: false
+#| message: false
+#| warning: false
+#| error: false
+
+print(graficos_bivariante$G)
+```
+
+En el caso del análisis bivarianta, los resultados son más consistentes entre distintos estadísticos.
+
+Se puede apreciar como existe un patrón mixto de segregación espacial a muy pequeña escala ($\lt 1 \ m$) y agregación a mediana-gran escala. La segregación posiblemente este marcada por la fuerte competencia interespecífica entre los juveniles de ambas especies. Por el contrario, la agregación a media distancia sugiere que ambos juveniles pueden compartir nicho, por lo que tienden a agruparse en áreas con los mismos recursos. 
+
+Por tanto, los datos sugieren la existencia de una competencia fuerte a cortas distancias (exclusión del micrositio), pero una coexistencia a nivel de rodal.
