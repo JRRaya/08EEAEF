@@ -1,13 +1,13 @@
 ---
 title: "Análisis espacial de puntos"
 format:
-  html:
-    html-math-method: katex
-    code-fold: true
+  pdf:
     toc: true
     number-sections: true
-    embed-resources: true
-    self-contained-math: true
+    colorlinks: true
+    code-block-bg: '#979999'       
+    code-block-border-left: '#1f2020'
+    pdf-engine: pdflatex
 knitr:
   opts_knit:
     root.dir: ".."
@@ -57,7 +57,12 @@ lista_dfs <- setNames(
 # 3.1. Definir función de análisis univariante
 analisis_univariante <- function(lista, n = 999) {
   # Normalización de los nombre
-  nombres <- tolower(gsub("[[:punct:]]", "_", names(lista)))
+  nombres <- tolower(gsub(
+    "[[:punct:]]", 
+    "_", 
+    names(lista)
+  ))
+  
   names(lista) <- nombres
   
   # Lista de guardado
@@ -69,15 +74,49 @@ analisis_univariante <- function(lista, n = 999) {
     df <- lista[[i]]
 
     # Construcción del objeto 'ppp'
-    x <- ppp(df$x, df$y, window = owin(range(df$x), range(df$y)))
+    x <- ppp(
+      df$x, 
+      df$y, 
+      window = owin(range(df$x), range(df$y))
+    )
 
     # Guardado directo de los resultados en la lista
     resultados[[i]] <- list(
-      K = envelope(x, Kest, nsim = n, correction = "all", verbose = FALSE), 
-      L = envelope(x, Lest, nsim = n, correction = "all", verbose = FALSE),
-      Lc = envelope(x, center_Lest, nsim = n, correction = "all", verbose = FALSE),
-      G = envelope(x, pcf, nsim = n, correction = "all", verbose = FALSE),
-      O = envelope(x, Oest, nsim = n, correction = "all", verbose = FALSE)
+      K = envelope(
+        x, 
+        Kest, 
+        nsim = n, 
+        correction = "all", 
+        verbose = FALSE
+      ), 
+      L = envelope(
+        x, 
+        Lest, 
+        nsim = n, 
+        correction = "all", 
+        verbose = FALSE
+      ),
+      Lc = envelope(
+        x, 
+        center_Lest, 
+        nsim = n, 
+        correction = "all", 
+        verbose = FALSE
+      ),
+      G = envelope(
+        x, 
+        pcf, 
+        nsim = n, 
+        correction = "all", 
+        verbose = FALSE
+      ),
+      O = envelope(
+        x, 
+        Oest, 
+        nsim = n, 
+        correction = "all", 
+        verbose = FALSE
+      )
     )
   }
 
@@ -108,9 +147,13 @@ for(i in names(resultados_univariante)) {
     # Contruimos el gráfico
     p <- plot_quantums(
       input = estadistico, 
-      labels = c("observed < low", "low < observed < high", "observed > high"),
+      labels = c(
+        "observed < low", 
+        "low < observed < high", 
+        "observed > high"
+      ),
       line_size = 0.8,
-      base_size = 15,
+      base_size = 8,
       xlab = "r (metros)",
       ylab = j
     ) + 
@@ -238,7 +281,7 @@ $$
 g(r) = \frac{K'(r)}{2 \pi r}
 $$
 
-siendo $K'(r)$ la derivada de $K(r)$. Para un proceso aleatorio de Poisson (distribución aleatoria de los datos), $g(r) = 1$. Valores de $g(r) \lt 1$ sugieren inhibición entre los puntos, mientras que valores de $g(r) \gt 1$ sugieren agregación.
+siendo $K'(r)$ la derivada de $K(r)$. Para un proceso aleatorio de Poisson (distribución aleatoria de los datos), $g(r) = 1$. Valores de $g(r) < 1$ sugieren inhibición entre los puntos, mientras que valores de $g(r) > 1$ sugieren agregación.
 
 Esta prueba la podemos ejecutar mediante la función `spatstat::pcf()`, y para nuestros datos el resultado fue:
 
@@ -311,14 +354,41 @@ analisis_bivariante <- function(i, j, n = 999) {
 
   # Cálculo de los estadísticos (combinación lineal de Eij y Eji)
   resultados <- list(
-    K = envelope(x, Kcross, correction = "all", i = "1", j = "2", nsim = n, verbose = FALSE),
-    L = envelope(x, Lcross, correction = "all", i = "1", j = "2", nsim = n, verbose = FALSE),
-    G = envelope(x, pcfcross, correction = "all", i = "1", j = "2", nsim = n, verbose = FALSE)
+    K12 = envelope(
+      x, 
+      Kcross, 
+      correction = "all", 
+      i = "1", 
+      j = "2", 
+      nsim = n, 
+      verbose = FALSE
+    ),
+    L12 = envelope(
+      x, 
+      Lcross, 
+      correction = "all", 
+      i = "1", 
+      j = "2", 
+      nsim = n, 
+      verbose = FALSE
+    ),
+    G12 = envelope(
+      x, 
+      pcfcross, 
+      correction = "all", 
+      i = "1", 
+      j = "2", 
+      nsim = n, 
+      verbose = FALSE
+    )
   )
 }
 
 # 4.2. Cálculo de resultados
-resultados_bivariante <- analisis_bivariante(i = lista_dfs$Q_ilex, j = lista_dfs$Q_faginea)
+resultados_bivariante <- analisis_bivariante(
+  i = lista_dfs$Q_ilex, 
+  j = lista_dfs$Q_faginea
+)
 
 # 4.3. Visualización
 # 4.3.1. Creamos la lista donde guardar los gráficos creados
@@ -332,9 +402,13 @@ for(i in names(resultados_bivariante)) {
   # Contruimos el gráfico
   p <- plot_quantums(
     input = estadistico, 
-    labels = c("observed < low", "low < observed < high", "observed > high"),
+    labels = c(
+      "observed < low", 
+      "low < observed < high", 
+      "observed > high"
+    ),
     line_size = 0.8,
-    base_size = 15,
+    base_size = 8,
     xlab = "r (metros)",
     ylab = i
   ) + 
@@ -347,7 +421,7 @@ for(i in names(resultados_bivariante)) {
 
 El paquete `spatstat` calcula por defecto la combinación lineal de los estadísticos de ambos análisis bivariables
 
-## Función K de Ripley $(K(r))$ bivariante
+## Función K de Ripley $(K(r)_{12})$ bivariante
 
 ```{r}
 #| label: k12
@@ -356,10 +430,10 @@ El paquete `spatstat` calcula por defecto la combinación lineal de los estadís
 #| warning: false
 #| error: false
 
-print(graficos_bivariante$K)
+print(graficos_bivariante$K12)
 ```
 
-## Transformación de la K de Ripley de Besag $(L(r))$ bivariante
+## Transformación de la K de Ripley de Besag $(L(r)_{12})$ bivariante
 
 ```{r}
 #| label: l12
@@ -368,10 +442,10 @@ print(graficos_bivariante$K)
 #| warning: false
 #| error: false
 
-print(graficos_bivariante$L)
+print(graficos_bivariante$L12)
 ```
 
-## Función de correlación por pares $(g(r))$ bivariante
+## Función de correlación por pares $(g(r)_{12})$ bivariante
 
 ```{r}
 #| label: g12
@@ -380,11 +454,13 @@ print(graficos_bivariante$L)
 #| warning: false
 #| error: false
 
-print(graficos_bivariante$G)
+print(graficos_bivariante$G12)
 ```
 
-En el caso del análisis bivarianta, los resultados son más consistentes entre distintos estadísticos.
+En el caso del análisis bivariantes, los resultados son más consistentes entre distintos estadísticos.
 
-Se puede apreciar como existe un patrón mixto de segregación espacial a muy pequeña escala ($\lt 1 \ m$) y agregación a mediana-gran escala. La segregación posiblemente este marcada por la fuerte competencia interespecífica entre los juveniles de ambas especies. Por el contrario, la agregación a media distancia sugiere que ambos juveniles pueden compartir nicho, por lo que tienden a agruparse en áreas con los mismos recursos. 
+Se puede apreciar como existe un patrón mixto de segregación espacial a muy pequeña escala ($< 1 \ m$) y agregación a mediana-gran escala. La segregación posiblemente este marcada por la fuerte competencia interespecífica entre los juveniles de ambas especies. Por el contrario, la agregación a media distancia sugiere que ambos juveniles pueden compartir nicho, por lo que tienden a agruparse en áreas con los mismos recursos. 
 
 Por tanto, los datos sugieren la existencia de una competencia fuerte a cortas distancias (exclusión del micrositio), pero una coexistencia a nivel de rodal.
+
+# Referencias
