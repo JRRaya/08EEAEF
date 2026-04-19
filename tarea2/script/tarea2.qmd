@@ -1,13 +1,13 @@
 ---
 title: "Análisis espacial de puntos"
 format:
-  html:
-    html-math-method: katex
-    code-fold: true
+  pdf:
     toc: true
     number-sections: true
-    embed-resources: true
-    self-contained-math: true
+    colorlinks: true
+    code-block-bg: '#979999'       
+    code-block-border-left: '#1f2020'
+    pdf-engine: pdflatex
 knitr:
   opts_knit:
     root.dir: ".."
